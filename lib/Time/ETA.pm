@@ -5,7 +5,7 @@ use warnings;
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.0.01';
+our $VERSION = '0.0.02';
 
 sub new {
 	my($class,$o) = @_;
