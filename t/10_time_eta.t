@@ -8,14 +8,11 @@ $|=1;
 my $t = Time::ETA->new;
 ok( eval { $t->percent==0 && $t->{count}==100 }, "object created without arg got right default values" );
 
-my $n = 10;
-$t = Time::ETA->new(10);
-ok( eval { $t->percent==0 && $t->{count}==10 }, "object created with scalar got right default values" );
+my $n = 20;
+$t = Time::ETA->new($n)->fmt("{P}% ETA{I}{H}h{M}m{S}s {B}\n");
+ok( eval { $t->percent==0 && $t->{count}==$n }, "object created with scalar got right default values" );
 
-#while( $n-- ) {
-#	print $t->tick."\n";
-#	sleep 1;
-#}
+print $t->tick while $n--;
 
 done_testing;
 

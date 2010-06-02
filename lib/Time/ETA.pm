@@ -9,30 +9,35 @@ our $VERSION = '0.0.01';
 
 sub new {
 	my($class,$o) = @_;
-	$o = {
-		max => defined $o ? 0+$o : 100,
-	} if ref($o) ne 'HASH';
+	$o = { max => defined $o ? 0+$o : 100 } unless ref($o) eq 'HASH';
 	my $self = {
-		max   => $o->{max} || 100,
-		min   => $o->{min} || 0,
+		max   => 100,
+		min   => 0,
 		indic => ' ',
+		bar   => 0,
+		%$o,
 		time  => [gettimeofday],
 		eta   => 0,
-		count => 0,
-		done  => 0,
-		fmt   => '',
 	};
 	bless $self, $class;
-	my $fmt = $o->{fmt} || '{P}% ETA{I}{H}h{M}m{S}s';
+	$self->{count} = $self->{max} - $self->{min};
+	$self->{done} = ($o->{set}||0) - $self->{min};
+	$self->fmt( $o->{fmt} );
+	$self;
+}
+
+sub fmt {
+	my( $self, $fmt ) = @_;
+	$fmt ||= '{P}% ETA{I}{H}h{M}m{S}s';
+	$self->{bar} = 20 if $fmt =~ /{B}/ && !$self->{bar};
 	$fmt =~ s/%/%%/g;
 	$fmt =~ s/{P}/%1\$d/g;
 	$fmt =~ s/{I}/%2\$s/g;
 	$fmt =~ s/{H}/%3\$d/g;
 	$fmt =~ s/{M}/%4\$02d/g;
 	$fmt =~ s/{S}/%5\$02d/g;
-	$self->{fmt}   = $fmt;
-	$self->{count} = $self->{max} - $self->{min};
-	$self->{done}  = ($o->{set}||0) - $self->{min};
+	$fmt =~ s/{B}/%6\$s/g;
+	$self->{fmt} = $fmt;
 	$self;
 }
 
@@ -59,11 +64,22 @@ sub percent {
 	$self->{count} ? int(100.0 * $self->{done} / $self->{count}) : 0;
 }
 
+sub bar {
+	my $self = shift;
+	return '' unless $self->{bar};
+	return ' ' x $self->{bar} unless $self->{bar}>2;
+	my $w = $self->{bar} - 2;
+	my $x = $self->{count} ? int(0.5 + ($w * $self->{done} / $self->{count})) : 0;
+	my $b = $x ? '=' x ($x-1) . '>' : '';
+	my $r = ' ' x ($w-$x);
+	"[$b$r]";
+}
+
 sub get {
 	my $self = shift;
     my $eta = int($self->{eta});
 	my $m = int($eta/60);
-	sprintf $self->{fmt}, $self->percent, $self->{indic}, int($m/60), $m%60, $eta%60;
+	sprintf $self->{fmt}, $self->percent, $self->{indic}, int($m/60), $m%60, $eta%60, $self->bar;
 }
 
 1;
@@ -77,20 +93,22 @@ Time::ETA
 
 the following code display a string like "100% ETA-2h34m56s"
 
-C<<use Time::ETA;>>
-C<<$eta = Time::ETA->new;>>
-C<<print $eta->tick for( $i=0 ; $i<100; ++$i );>>
+ use Time::ETA;
+ $eta = Time::ETA->new;
+ print $eta->tick."\n" for($i=0;$i<100;$i++);
 
 one more way to do it
-  
-C<<$eta = Time::ETA->new($max=100);>>
-C<<print $eta->inc->get while --$max;>>
+ 
+ use Time::ETA;
+ $eta = Time::ETA->new($max=100);
+ print $eta->inc->get."\n" while $max--;
 
 and again
 
-C<<$nb = 100;>>
-C<<$eta = Time::ETA->new({ min=>0, max=>$nb, set=>0, fmt=>"%P% ETA%I%Hh%Mm%Ss" });>>
-C<<print $eta->set($i)->format for( $i=0; $i<$nb; ++$i );>>
+ use Time::ETA;
+ $max = 100;
+ $eta = Time::ETA->new({ min=>0, max=>$max, set=>0, fmt=>"%P% ETA%I%Hh%Mm%Ss\n" });
+ print $eta->set($i)->format for( $i=0; $i<$max; ++$i );
 
 =head1 DESCRIPTION
 
@@ -104,7 +122,7 @@ Time::ETA is another Estimated Time of Arrival
 
 =item B<new>(count)
 
-=item B<new>({min=>int,max=>int,set=>int,fmt=>str})
+=item B<new>({min=>int,max=>int,set=>int,fmt=>str,bar=>int})
 
 
 I<parameters>
@@ -113,14 +131,23 @@ I<parameters>
  min  : you start a this iteration (default=0).
  max  : you end a this iteration (default=100).
  set  : you are actually (default=0).
+ bar  : progress bar with in character (default=20)
  fmt  : the format you want (default={P} ETA{I}{H}h{M}m{S}s eg: 33% ETA-5h12m55s).
         {P} = percent
         {I} = relative indicator for one iteration's average time (+ or -)
         {H} = hours
         {M} = minutes
         {S} = seconds
+        {B} = progress bar
  
 I<return> a blessed object
+
+=item B<fmt>(format)
+
+ set format (see new for details)
+ eg:
+
+   my $eta = Time::ETA->new(10)->fmt("{B}\n");
 
 =item B<tick>
 
@@ -163,6 +190,9 @@ I<return> self
 
 I<return> the achievment percent
 
+=item B<bar>
+
+I<return> the current progress bar
 
 =item B<eta>
 
