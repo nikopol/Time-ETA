@@ -65,7 +65,11 @@ sub percent {
 }
 
 sub bar {
-	my $self = shift;
+	my( $self, $width ) = @_;
+	if( $width ) {
+		$self->{bar} = $width;
+		return $self;
+	}
 	return '' unless $self->{bar};
 	return ' ' x $self->{bar} unless $self->{bar}>2;
 	my $w = $self->{bar} - 2;
