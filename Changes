@@ -1,5 +1,9 @@
 Revision history for Perl extension Time::ETA
 
+0.0.04  Fri Apr 10
+        - user message added
+		- animated char added
+
 0.0.03  Fri Apr 10
         - bar(width) added
 

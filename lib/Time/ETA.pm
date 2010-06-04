@@ -5,7 +5,7 @@ use warnings;
 
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.0.03';
+our $VERSION = '0.0.04';
 
 sub new {
 	my($class,$o) = @_;
@@ -18,6 +18,7 @@ sub new {
 		%$o,
 		time  => [gettimeofday],
 		eta   => 0,
+		anim  => 0,
 	};
 	bless $self, $class;
 	$self->{count} = $self->{max} - $self->{min};
@@ -37,12 +38,14 @@ sub fmt {
 	$fmt =~ s/{M}/%4\$02d/g;
 	$fmt =~ s/{S}/%5\$02d/g;
 	$fmt =~ s/{B}/%6\$s/g;
+	$fmt =~ s/{A}/%7\$s/g;
+	$fmt =~ s/{U}/%8\$s/g;
 	$self->{fmt} = $fmt;
 	$self;
 }
 
 sub tick {
-	shift->inc(shift)->get;
+	shift->inc->get(shift);
 }
 
 sub set {
@@ -79,11 +82,19 @@ sub bar {
 	"[$b$r]";
 }
 
-sub get {
+sub anim {
 	my $self = shift;
+	my @char = ('|','/','-','\\');
+	$self->{anim} = ($self->{anim}+1)%4;
+	$char[$self->{anim}];
+}
+
+sub get {
+	my( $self, $msg ) = @_;
     my $eta = int($self->{eta});
 	my $m = int($eta/60);
-	sprintf $self->{fmt}, $self->percent, $self->{indic}, int($m/60), $m%60, $eta%60, $self->bar;
+	$self->{anim} = ($self->{anim})%4;
+	sprintf $self->{fmt}, $self->percent, $self->{indic}, int($m/60), $m%60, $eta%60, $self->bar, $self->anim, $msg || '';
 }
 
 1;
@@ -143,6 +154,8 @@ I<parameters>
         {M} = minutes
         {S} = seconds
         {B} = progress bar
+		{A} = animated char
+		{U} = user message
  
 I<return> a blessed object
 
@@ -155,7 +168,7 @@ I<return> a blessed object
 
 =item B<tick>
 
-=item B<tick>(delta)
+=item B<tick>(usermessage)
 
 increment your iteration's count.
 
@@ -198,12 +211,20 @@ I<return> the achievment percent
 
 I<return> the current progress bar
 
+=item B<bar>(width)
+
+set progress bar width
+
+I<return> self
+
 =item B<eta>
 
 I<return> the estimated time of arrival in seconds
 
 
 =item B<get>
+
+=item B<get>(usermessage)
 
 I<return> the estimated time of arrival formated (see B<new> method).
 
