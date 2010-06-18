@@ -122,7 +122,7 @@ and again
 
  use Time::ETA;
  $max = 100;
- $eta = Time::ETA->new({ min=>0, max=>$max, set=>0, fmt=>"%P% ETA%I%Hh%Mm%Ss\n" });
+ $eta = Time::ETA->new({ min=>0, max=>$max, set=>0, fmt=>"{P}% ETA{I}{H}h{M}m{S}s\n" });
  print $eta->set($i)->format for( $i=0; $i<$max; ++$i );
 
 =head1 DESCRIPTION
