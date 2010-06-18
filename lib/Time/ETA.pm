@@ -154,8 +154,8 @@ I<parameters>
         {M} = minutes
         {S} = seconds
         {B} = progress bar
-		{A} = animated char
-		{U} = user message
+        {A} = animated char
+        {U} = user message
  
 I<return> a blessed object
 
