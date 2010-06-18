@@ -91,7 +91,7 @@ sub anim {
 
 sub get {
 	my( $self, $msg ) = @_;
-    my $eta = int($self->{eta});
+	my $eta = int($self->{eta});
 	my $m = int($eta/60);
 	$self->{anim} = ($self->{anim})%4;
 	sprintf $self->{fmt}, $self->percent, $self->{indic}, int($m/60), $m%60, $eta%60, $self->bar, $self->anim, $msg || '';
